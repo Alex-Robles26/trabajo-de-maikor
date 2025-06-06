@@ -13,6 +13,7 @@ namespace _3
             cmbTipoCliente.Items.AddRange(new string[] { "Regular", "VIP" });
             cmbTipoCliente.SelectedIndex = 0;
             CargarClientes();
+            dgvClientes.ReadOnly = true;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -59,21 +60,34 @@ namespace _3
         {
             try
             {
-                if (clienteIDSeleccionado == -1)
+                if (dgvClientes.SelectedRows.Count == 0)
                 {
-                    MessageBox.Show("Selecciona un cliente para editar.");
+                    MessageBox.Show("Selecciona una fila para editar.");
                     return;
                 }
 
-                Cliente actualizado = CrearClienteDesdeFormulario();
-                clienteBLL.EditarCliente(actualizado);
-                MessageBox.Show("Cliente actualizado correctamente");
+                // Obtener fila seleccionada
+                DataGridViewRow fila = dgvClientes.SelectedRows[0];
+                int id = Convert.ToInt32(fila.Cells["ClienteID"].Value);
+
+                // Crear cliente actualizado desde los controles
+                string tipo = cmbTipoCliente.SelectedItem.ToString();
+                Cliente cliente = tipo == "VIP" ? new ClienteVIP() : new ClienteRegular();
+
+                cliente.ClienteID = id;
+                cliente.Nombre = txtNombre.Text.Trim();
+                cliente.Telefono = txtTelefono.Text.Trim();
+                cliente.FechaAlta = dtpFechaAlta.Value;
+                cliente.TipoCliente = tipo;
+
+                clienteBLL.EditarCliente(cliente);
+                MessageBox.Show("Cliente actualizado correctamente.");
                 CargarClientes();
                 LimpiarFormulario();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Error al editar: " + ex.Message);
             }
         }
 
@@ -81,34 +95,37 @@ namespace _3
         {
             try
             {
-                if (clienteIDSeleccionado == -1)
+                if (dgvClientes.SelectedRows.Count == 0)
                 {
-                    MessageBox.Show("Selecciona un cliente para eliminar.");
+                    MessageBox.Show("Selecciona una fila para eliminar.");
                     return;
                 }
 
-                clienteBLL.EliminarCliente(clienteIDSeleccionado);
-                MessageBox.Show("Cliente eliminado");
-                CargarClientes();
-                LimpiarFormulario();
+                // Obtener la fila seleccionada
+                DataGridViewRow fila = dgvClientes.SelectedRows[0];
+
+                // Obtener el ID del cliente desde la celda
+                int id = Convert.ToInt32(fila.Cells["ClienteID"].Value);
+
+                // Confirmación
+                var confirm = MessageBox.Show("¿Estás seguro de eliminar este cliente?", "Confirmar eliminación", MessageBoxButtons.YesNo);
+                if (confirm == DialogResult.Yes)
+                {
+                    clienteBLL.EliminarCliente(id);
+                    MessageBox.Show("Cliente eliminado exitosamente.");
+                    CargarClientes(); // Refresca la grilla
+                    LimpiarFormulario();
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Error al eliminar: " + ex.Message);
             }
         }
 
         private void dgvClientes_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
-            {
-                var fila = dgvClientes.Rows[e.RowIndex];
-                clienteIDSeleccionado = Convert.ToInt32(fila.Cells["ClienteID"].Value);
-                txtNombre.Text = fila.Cells["Nombre"].Value.ToString();
-                txtTelefono.Text = fila.Cells["Telefono"].Value.ToString();
-                dtpFechaAlta.Value = Convert.ToDateTime(fila.Cells["FechaAlta"].Value);
-                cmbTipoCliente.SelectedItem = fila.Cells["TipoCliente"].Value.ToString();
-            }
+
         }
 
         private void btnDescuento_Click(object sender, EventArgs e)
@@ -138,6 +155,21 @@ namespace _3
             cmbTipoCliente.SelectedIndex = 0;
             dtpFechaAlta.Value = DateTime.Today;
             lblTotalConDescuento.Text = "";
+        }
+
+        private void dgvClientes_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow fila = dgvClientes.Rows[e.RowIndex];
+
+                // Obtener valores de la fila seleccionada
+                clienteIDSeleccionado = Convert.ToInt32(fila.Cells["ClienteID"].Value);
+                txtNombre.Text = fila.Cells["Nombre"].Value.ToString();
+                txtTelefono.Text = fila.Cells["Telefono"].Value.ToString();
+                dtpFechaAlta.Value = Convert.ToDateTime(fila.Cells["FechaAlta"].Value);
+                cmbTipoCliente.SelectedItem = fila.Cells["TipoCliente"].Value.ToString();
+            }
         }
     }
 }

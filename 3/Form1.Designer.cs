@@ -50,6 +50,7 @@
             dgvClientes.RowHeadersWidth = 51;
             dgvClientes.Size = new Size(300, 188);
             dgvClientes.TabIndex = 21;
+            dgvClientes.CellClick += dgvClientes_CellClick;
             dgvClientes.CellContentClick += dgvClientes_CellContentClick;
             // 
             // btnDescuento
